@@ -9,6 +9,7 @@ def test_list_strategies(capsys):
     captured = capsys.readouterr()
 
     assert exit_code == 0
+    assert "covered-calls" in captured.out
     assert "echo" in captured.out
     assert "long-leaps-short-calls-diagonal" in captured.out
     assert "reverse" in captured.out
@@ -35,6 +36,14 @@ def test_run_long_leaps_short_calls_diagonal_strategy(capsys):
 
     assert exit_code == 0
     assert "Long LEAPS + Short Calls Diagonal (AAPL)" in captured.out
+
+
+def test_run_covered_calls_strategy(capsys):
+    exit_code = main(["--strategy", "covered-calls", "--input", "SNOW"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Strategy: Covered Calls (SNOW)" in captured.out
 
 
 def test_diagonal_snapshot_cli(monkeypatch: pytest.MonkeyPatch, capsys):

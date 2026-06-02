@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Dict
 
 from explore_options.strategies.base import Strategy
+from explore_options.strategies.covered_calls import CoveredCallsStrategy
 from explore_options.strategies.echo import EchoStrategy
 from explore_options.strategies.long_leaps_short_calls_diagonal import (
     LongLeapsShortCallsDiagonalStrategy,
@@ -10,6 +11,7 @@ from explore_options.strategies.long_leaps_short_calls_diagonal import (
 from explore_options.strategies.reverse import ReverseStrategy
 
 _STRATEGIES: Dict[str, Strategy] = {
+    CoveredCallsStrategy.name: CoveredCallsStrategy(),
     EchoStrategy.name: EchoStrategy(),
     LongLeapsShortCallsDiagonalStrategy.name: LongLeapsShortCallsDiagonalStrategy(),
     ReverseStrategy.name: ReverseStrategy(),
