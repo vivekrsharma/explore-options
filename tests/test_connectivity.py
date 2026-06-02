@@ -2,11 +2,16 @@ from __future__ import annotations
 
 from datetime import date
 from datetime import datetime
+import json
 
 import pytest
 
 from explore_options.connectivity.robinhood_unofficial import RobinhoodUnofficialProvider
-from explore_options.connectivity.cboe_options import OptionCallQuote, OptionChainSnapshot
+from explore_options.connectivity.cboe_options import (
+    JsonOptionChainProvider,
+    OptionCallQuote,
+    OptionChainSnapshot,
+)
 from explore_options.connectivity.diagonal_snapshot import create_diagonal_snapshot_report
 from explore_options.connectivity.stooq import StooqProvider
 
@@ -123,3 +128,51 @@ def test_create_diagonal_snapshot_report_filters_candidates() -> None:
     assert "SNOW280121C00370000" not in report
     assert "SNOW260717C00320000" in report
     assert "SNOW260717C00270000" not in report
+
+
+def test_create_diagonal_snapshot_report_rejects_invalid_as_of_date() -> None:
+    with pytest.raises(ValueError):
+        create_diagonal_snapshot_report(
+            symbol="SNOW",
+            long_expiry=date(2021, 6, 18),
+            short_expiry=date(2021, 7, 16),
+            provider=_FakeCboeProvider(),
+            as_of_date=date(2021, 7, 1),
+        )
+
+
+def test_json_option_chain_provider_loads_snapshot(tmp_path) -> None:
+    payload = {
+        "timestamp": "2021-06-15 16:00:00",
+        "data": {
+            "current_price": 240.0,
+            "options": [
+                {
+                    "option": "SNOW240719C00230000",
+                    "bid": 80.0,
+                    "ask": 82.0,
+                    "delta": 0.71,
+                    "open_interest": 100,
+                    "volume": 10,
+                },
+                {
+                    "option": "SNOW210716P00230000",
+                    "bid": 5.0,
+                    "ask": 5.5,
+                    "delta": -0.2,
+                    "open_interest": 80,
+                    "volume": 8,
+                },
+            ],
+        },
+    }
+    path = tmp_path / "snow_2021-06-15.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    provider = JsonOptionChainProvider(str(path))
+    snapshot = provider.get_option_chain("SNOW")
+
+    assert snapshot.symbol == "SNOW"
+    assert snapshot.spot == 240.0
+    assert len(snapshot.calls) == 1
+    assert snapshot.calls[0].contract == "SNOW240719C00230000"

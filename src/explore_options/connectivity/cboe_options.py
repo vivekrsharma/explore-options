@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
+import json
+from pathlib import Path
 import re
 
 import requests
@@ -40,39 +42,55 @@ class CboeDelayedOptionsProvider:
         response.raise_for_status()
         payload = response.json()
 
-        data = payload["data"]
-        spot = float(data["current_price"])
-        timestamp = str(payload["timestamp"])
+        return parse_cboe_option_chain_payload(payload=payload, symbol=upper_symbol)
 
-        pattern = re.compile(rf"^{upper_symbol}(\d{{6}})([CP])(\d{{8}})$")
-        calls: list[OptionCallQuote] = []
 
-        for row in data["options"]:
-            contract = str(row["option"])
-            match = pattern.match(contract)
-            if not match:
-                continue
-            if match.group(2) != "C":
-                continue
+class JsonOptionChainProvider:
+    """Load a previously saved Cboe-style option-chain JSON for backdated analysis."""
 
-            expiry = datetime.strptime(match.group(1), "%y%m%d").date()
-            strike = int(match.group(3)) / 1000.0
-            calls.append(
-                OptionCallQuote(
-                    contract=contract,
-                    expiry=expiry,
-                    strike=strike,
-                    bid=float(row.get("bid") or 0),
-                    ask=float(row.get("ask") or 0),
-                    delta=(float(row["delta"]) if row.get("delta") is not None else None),
-                    open_interest=float(row.get("open_interest") or 0),
-                    volume=float(row.get("volume") or 0),
-                )
+    def __init__(self, file_path: str) -> None:
+        self._file_path = Path(file_path)
+
+    def get_option_chain(self, symbol: str) -> OptionChainSnapshot:
+        raw = self._file_path.read_text(encoding="utf-8")
+        payload = json.loads(raw)
+        return parse_cboe_option_chain_payload(payload=payload, symbol=symbol.upper())
+
+
+def parse_cboe_option_chain_payload(payload: dict, symbol: str) -> OptionChainSnapshot:
+    data = payload["data"]
+    spot = float(data["current_price"])
+    timestamp = str(payload["timestamp"])
+
+    pattern = re.compile(rf"^{symbol}(\d{{6}})([CP])(\d{{8}})$")
+    calls: list[OptionCallQuote] = []
+
+    for row in data["options"]:
+        contract = str(row["option"])
+        match = pattern.match(contract)
+        if not match:
+            continue
+        if match.group(2) != "C":
+            continue
+
+        expiry = datetime.strptime(match.group(1), "%y%m%d").date()
+        strike = int(match.group(3)) / 1000.0
+        calls.append(
+            OptionCallQuote(
+                contract=contract,
+                expiry=expiry,
+                strike=strike,
+                bid=float(row.get("bid") or 0),
+                ask=float(row.get("ask") or 0),
+                delta=(float(row["delta"]) if row.get("delta") is not None else None),
+                open_interest=float(row.get("open_interest") or 0),
+                volume=float(row.get("volume") or 0),
             )
-
-        return OptionChainSnapshot(
-            symbol=upper_symbol,
-            spot=spot,
-            timestamp=timestamp,
-            calls=calls,
         )
+
+    return OptionChainSnapshot(
+        symbol=symbol,
+        spot=spot,
+        timestamp=timestamp,
+        calls=calls,
+    )

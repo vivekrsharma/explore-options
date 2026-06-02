@@ -1,6 +1,7 @@
 from explore_options.connectivity.base import DailyBar, MarketDataProvider
 from explore_options.connectivity.cboe_options import (
     CboeDelayedOptionsProvider,
+    JsonOptionChainProvider,
     OptionCallQuote,
     OptionChainSnapshot,
 )
@@ -11,6 +12,7 @@ from explore_options.connectivity.stooq import StooqProvider
 __all__ = [
     "CboeDelayedOptionsProvider",
     "DailyBar",
+    "JsonOptionChainProvider",
     "MarketDataProvider",
     "OptionCallQuote",
     "OptionChainSnapshot",

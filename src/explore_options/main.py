@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from datetime import date
 
+from explore_options.connectivity.cboe_options import JsonOptionChainProvider
 from explore_options.connectivity.diagonal_snapshot import create_diagonal_snapshot_report
 from explore_options.strategies.registry import get_strategy, list_strategies
 
@@ -28,6 +29,14 @@ def build_parser() -> argparse.ArgumentParser:
         default="2026-07-17",
         help="Short-call expiry in YYYY-MM-DD",
     )
+    parser.add_argument(
+        "--as-of",
+        help="Scenario as-of date in YYYY-MM-DD (use with historical chain snapshots)",
+    )
+    parser.add_argument(
+        "--chain-json",
+        help="Path to saved Cboe-style option chain JSON for backdated analysis",
+    )
     return parser
 
 
@@ -38,11 +47,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.diagonal_snapshot:
         long_expiry = date.fromisoformat(args.long_expiry)
         short_expiry = date.fromisoformat(args.short_expiry)
+        as_of_date = date.fromisoformat(args.as_of) if args.as_of else None
+        provider = JsonOptionChainProvider(args.chain_json) if args.chain_json else None
         print(
             create_diagonal_snapshot_report(
                 symbol=args.symbol,
                 long_expiry=long_expiry,
                 short_expiry=short_expiry,
+                provider=provider,
+                as_of_date=as_of_date,
             )
         )
         return 0

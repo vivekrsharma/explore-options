@@ -44,6 +44,7 @@ python -m explore_options.main --list
 python -m explore_options.main --strategy reverse --input "hello"
 python -m explore_options.main --strategy long-leaps-short-calls-diagonal --input "AAPL"
 python -m explore_options.main --diagonal-snapshot --symbol SNOW --long-expiry 2028-01-21 --short-expiry 2026-07-17
+python -m explore_options.main --diagonal-snapshot --symbol SNOW --long-expiry 2024-07-19 --short-expiry 2021-08-20 --as-of 2021-06-15 --chain-json data/snow_2021-06-15.json
 ```
 
 ### Add a new strategy
@@ -90,4 +91,11 @@ short-call candidates for a diagonal setup:
 
 ```sh
 python -m explore_options.main --diagonal-snapshot --symbol SNOW --long-expiry 2028-01-21 --short-expiry 2026-07-17
+```
+
+For backdated analysis, save a Cboe-style chain JSON from the historical date and
+run the same command with `--as-of` and `--chain-json`:
+
+```sh
+python -m explore_options.main --diagonal-snapshot --symbol SNOW --long-expiry 2024-07-19 --short-expiry 2021-07-16 --as-of 2021-06-15 --chain-json data/snow_2021-06-15.json
 ```

@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Protocol
 
 from explore_options.connectivity.cboe_options import (
     CboeDelayedOptionsProvider,
     OptionCallQuote,
     OptionChainSnapshot,
 )
+
+
+class OptionChainProvider(Protocol):
+    def get_option_chain(self, symbol: str) -> OptionChainSnapshot:
+        ...
 
 
 def _is_liquid(option: OptionCallQuote) -> bool:
@@ -47,13 +53,25 @@ def create_diagonal_snapshot_report(
     symbol: str,
     long_expiry: date,
     short_expiry: date,
-    provider: CboeDelayedOptionsProvider | None = None,
+    provider: OptionChainProvider | None = None,
+    as_of_date: date | None = None,
 ) -> str:
-    source = provider or CboeDelayedOptionsProvider()
+    source: OptionChainProvider = provider or CboeDelayedOptionsProvider()
+
+    if as_of_date is not None:
+        if long_expiry <= as_of_date:
+            raise ValueError("Long expiry must be later than as-of date.")
+        if short_expiry <= as_of_date:
+            raise ValueError("Short expiry must be later than as-of date.")
+
     snapshot: OptionChainSnapshot = source.get_option_chain(symbol)
 
-    long_calls = [option for option in snapshot.calls if option.expiry == long_expiry]
-    short_calls = [option for option in snapshot.calls if option.expiry == short_expiry]
+    available_calls = snapshot.calls
+    if as_of_date is not None:
+        available_calls = [option for option in available_calls if option.expiry > as_of_date]
+
+    long_calls = [option for option in available_calls if option.expiry == long_expiry]
+    short_calls = [option for option in available_calls if option.expiry == short_expiry]
 
     selected_long = _select_long_leaps(long_calls)
     selected_short = _select_short_calls(short_calls, spot=snapshot.spot)
@@ -61,6 +79,11 @@ def create_diagonal_snapshot_report(
     lines = [
         f"Diagonal snapshot for {snapshot.symbol}",
         f"Spot: {snapshot.spot:.2f}",
+        (
+            f"Scenario as-of date: {as_of_date.isoformat()}"
+            if as_of_date is not None
+            else "Scenario as-of date: live snapshot"
+        ),
         f"Long expiry: {long_expiry.isoformat()} (available calls: {len(long_calls)})",
         f"Short expiry: {short_expiry.isoformat()} (available calls: {len(short_calls)})",
         f"Data timestamp: {snapshot.timestamp}",
