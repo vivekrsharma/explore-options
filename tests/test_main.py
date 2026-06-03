@@ -119,10 +119,11 @@ def test_checklist_cli_single_strategy(capsys):
 
     assert exit_code == 0
     assert "Checklist for covered-calls" in captured.out
+    assert "Confidence:" in captured.out
 
 
 def test_checklist_cli_all_strategies(capsys):
-    exit_code = main(["--checklist-all"])
+    exit_code = main(["--checklist-all", "--capital", "25000", "--dte-days", "45"])
     captured = capsys.readouterr()
 
     assert exit_code == 0

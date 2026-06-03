@@ -14,9 +14,7 @@ _BANNED_EMOTIONAL_TURMOIL_STRATEGIES = {
 @dataclass(frozen=True)
 class ChecklistInput:
     capital_available: float = 25_000.0
-    max_drawdown_tolerance_pct: float = 30.0
-    monitoring_days_per_week: int = 3
-    assignment_tolerance: bool = True
+    dte_days: int = 30
 
 
 @dataclass(frozen=True)
@@ -25,6 +23,9 @@ class ChecklistResult:
     passed: bool
     score: int
     max_score: int
+    confidence_score: int
+    confidence_label: str
+    confidence_adjustments: list[str] = field(default_factory=list)
     hard_failures: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -33,7 +34,13 @@ class ChecklistResult:
             f"Checklist for {self.strategy_name}",
             f"Result: {'PASS' if self.passed else 'FAIL'}",
             f"Score: {self.score}/{self.max_score}",
+            f"Confidence: {self.confidence_score} ({self.confidence_label})",
         ]
+
+        if self.confidence_adjustments:
+            lines.append("Confidence adjustments:")
+            for item in self.confidence_adjustments:
+                lines.append(f"- {item}")
 
         if self.hard_failures:
             lines.append("Hard failures:")
@@ -54,12 +61,6 @@ def _evaluate_common_hard_rules(strategy_name: str, checklist: ChecklistInput) -
     if strategy_name.lower() in _BANNED_EMOTIONAL_TURMOIL_STRATEGIES:
         failures.append("Strategy is banned by emotional-turmoil policy.")
 
-    if not checklist.assignment_tolerance and strategy_name in {
-        "covered-calls",
-        "long-leaps-short-calls-diagonal",
-    }:
-        failures.append("Assignment tolerance is required for short-call strategies.")
-
     return failures
 
 
@@ -70,57 +71,44 @@ def evaluate_strategy_checklist(
     hard_failures = _evaluate_common_hard_rules(strategy_name, checklist)
 
     score = 0
-    max_score = 5
+    max_score = 2
     warnings: list[str] = []
 
-    if checklist.capital_available >= 10_000:
+    if checklist.capital_available > 10_000:
         score += 1
     else:
-        warnings.append("Capital below 10,000 may limit flexibility.")
+        warnings.append("Capital must be greater than 10,000.")
 
-    if checklist.max_drawdown_tolerance_pct >= 25:
+    if checklist.dte_days >= 30:
         score += 1
     else:
-        warnings.append("Drawdown tolerance below 25% may not fit equity-based options.")
+        warnings.append("DTE must be 30 days or greater.")
 
-    if checklist.monitoring_days_per_week >= 2:
-        score += 1
+    passed = not hard_failures and score == max_score
+
+    confidence_adjustments: list[str] = []
+    base_confidence = round((score / max_score) * 100)
+    confidence_score = base_confidence
+
+    if hard_failures and confidence_score > 25:
+        confidence_adjustments.append("capped to 25 due to hard-failure policy")
+        confidence_score = 25
+
+    if confidence_score >= 80:
+        confidence_label = "High"
+    elif confidence_score >= 60:
+        confidence_label = "Medium"
     else:
-        warnings.append("Monitoring fewer than 2 days/week may be insufficient for adjustments.")
-
-    if strategy_name == "covered-calls":
-        if checklist.capital_available >= 15_000:
-            score += 1
-        else:
-            warnings.append("Covered calls generally need enough capital for 100-share lots.")
-
-        if checklist.max_drawdown_tolerance_pct >= 30:
-            score += 1
-        else:
-            warnings.append("Covered calls still carry meaningful downside stock risk.")
-
-    elif strategy_name == "long-leaps-short-calls-diagonal":
-        if checklist.monitoring_days_per_week >= 3:
-            score += 1
-        else:
-            warnings.append("Diagonal strategies benefit from active monitoring.")
-
-        if checklist.max_drawdown_tolerance_pct >= 35:
-            score += 1
-        else:
-            warnings.append("Diagonal setups can experience larger drawdowns and greek drift.")
-
-    else:
-        # Generic strategy path.
-        score += 2
-
-    passed = not hard_failures and score >= 3
+        confidence_label = "Low"
 
     return ChecklistResult(
         strategy_name=strategy_name,
         passed=passed,
         score=score,
         max_score=max_score,
+        confidence_score=confidence_score,
+        confidence_label=confidence_label,
+        confidence_adjustments=confidence_adjustments,
         hard_failures=hard_failures,
         warnings=warnings,
     )

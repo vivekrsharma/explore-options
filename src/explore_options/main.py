@@ -68,22 +68,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Capital available for the strategy",
     )
     parser.add_argument(
-        "--max-drawdown-pct",
-        type=float,
-        default=30,
-        help="Maximum drawdown tolerance in percent",
-    )
-    parser.add_argument(
-        "--monitoring-days-per-week",
+        "--dte-days",
         type=int,
-        default=3,
-        help="How many days per week you can actively monitor positions",
-    )
-    parser.add_argument(
-        "--assignment-tolerance",
-        choices=["yes", "no"],
-        default="yes",
-        help="Whether assignment risk is acceptable",
+        default=30,
+        help="Days to expiration for the trade setup",
     )
     return parser
 
@@ -94,9 +82,7 @@ def main(argv: list[str] | None = None) -> int:
 
     checklist_input = ChecklistInput(
         capital_available=args.capital,
-        max_drawdown_tolerance_pct=args.max_drawdown_pct,
-        monitoring_days_per_week=args.monitoring_days_per_week,
-        assignment_tolerance=(args.assignment_tolerance == "yes"),
+        dte_days=args.dte_days,
     )
 
     if args.checklist_all:

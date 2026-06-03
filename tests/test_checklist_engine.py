@@ -12,24 +12,27 @@ def test_evaluate_strategy_checklist_passes_for_covered_calls() -> None:
         "covered-calls",
         ChecklistInput(
             capital_available=30_000,
-            max_drawdown_tolerance_pct=40,
-            monitoring_days_per_week=3,
-            assignment_tolerance=True,
+            dte_days=45,
         ),
     )
 
     assert result.passed is True
-    assert result.score >= 3
+    assert result.score == 2
+    assert result.confidence_score == 100
+    assert result.confidence_label == "High"
 
 
-def test_evaluate_strategy_checklist_fails_when_assignment_not_tolerated() -> None:
+def test_evaluate_strategy_checklist_fails_when_dte_too_short() -> None:
     result = evaluate_strategy_checklist(
         "long-leaps-short-calls-diagonal",
-        ChecklistInput(assignment_tolerance=False),
+        ChecklistInput(capital_available=20_000, dte_days=15),
     )
 
     assert result.passed is False
-    assert any("Assignment tolerance" in item for item in result.hard_failures)
+    assert any("DTE" in item for item in result.warnings)
+    assert result.score == 1
+    assert result.confidence_score == 50
+    assert result.confidence_label == "Low"
 
 
 def test_evaluate_strategy_checklist_fails_for_banned_csp() -> None:
@@ -37,6 +40,8 @@ def test_evaluate_strategy_checklist_fails_for_banned_csp() -> None:
 
     assert result.passed is False
     assert any("emotional-turmoil policy" in item for item in result.hard_failures)
+    assert result.confidence_score <= 25
+    assert result.confidence_label == "Low"
 
 
 def test_evaluate_all_strategy_checklists_returns_sorted_results() -> None:
@@ -47,3 +52,10 @@ def test_evaluate_all_strategy_checklists_returns_sorted_results() -> None:
 
     names = [result.strategy_name for result in results]
     assert names == ["covered-calls", "reverse"]
+
+
+def test_checklist_result_render_includes_confidence() -> None:
+    result = evaluate_strategy_checklist("covered-calls", ChecklistInput())
+    rendered = result.render_text()
+
+    assert "Confidence:" in rendered
