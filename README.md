@@ -43,9 +43,34 @@ Use the runner:
 python -m explore_options.main --list
 python -m explore_options.main --strategy reverse --input "hello"
 python -m explore_options.main --strategy long-leaps-short-calls-diagonal --input "AAPL"
+python -m explore_options.main --checklist --strategy covered-calls
+python -m explore_options.main --checklist-all --capital 30000 --max-drawdown-pct 35 --monitoring-days-per-week 3 --assignment-tolerance yes
 python -m explore_options.main --diagonal-snapshot --symbol SNOW --long-expiry 2028-01-21 --short-expiry 2026-07-17
 python -m explore_options.main --diagonal-snapshot --symbol SNOW --long-expiry 2024-07-19 --short-expiry 2021-08-20 --as-of 2021-06-15 --chain-json data/snow_2021-06-15.json
 ```
+
+## Checklist Engine
+
+Use the checklist engine to evaluate strategy fit against practical constraints.
+
+- Single strategy:
+
+```sh
+python -m explore_options.main --checklist --strategy covered-calls
+```
+
+- All strategies:
+
+```sh
+python -m explore_options.main --checklist-all
+```
+
+Checklist inputs:
+
+- `--capital`
+- `--max-drawdown-pct`
+- `--monitoring-days-per-week`
+- `--assignment-tolerance yes|no`
 
 ### Add a new strategy
 

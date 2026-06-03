@@ -106,3 +106,25 @@ def test_diagonal_snapshot_cli_with_as_of_and_chain_json(
 
     assert exit_code == 0
     assert captured.out.strip() == "snapshot-with-as-of"
+
+
+def test_checklist_cli_requires_strategy():
+    with pytest.raises(SystemExit):
+        main(["--checklist"])
+
+
+def test_checklist_cli_single_strategy(capsys):
+    exit_code = main(["--checklist", "--strategy", "covered-calls"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Checklist for covered-calls" in captured.out
+
+
+def test_checklist_cli_all_strategies(capsys):
+    exit_code = main(["--checklist-all"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Checklist for covered-calls" in captured.out
+    assert "Checklist for long-leaps-short-calls-diagonal" in captured.out
