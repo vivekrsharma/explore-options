@@ -28,6 +28,12 @@ def test_unknown_strategy_fails():
         main(["--strategy", "missing"])
 
 
+@pytest.mark.parametrize("name", ["cash-secured-put", "cash-secured-puts", "csp"])
+def test_banned_cash_secured_put_strategy_fails(name: str):
+    with pytest.raises(SystemExit):
+        main(["--strategy", name])
+
+
 def test_run_long_leaps_short_calls_diagonal_strategy(capsys):
     exit_code = main(
         ["--strategy", "long-leaps-short-calls-diagonal", "--input", "AAPL"]

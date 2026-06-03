@@ -67,6 +67,11 @@ class MyStrategy(Strategy):
 		return input_text
 ```
 
+### Strategy Policy
+
+Cash-secured puts are disabled by policy in this project. The CLI rejects common
+names and aliases such as `cash-secured-put`, `cash-secured-puts`, and `csp`.
+
 ## Connectivity Module
 
 Use connectivity providers from `src/explore_options/connectivity/` to pull data.

@@ -9,6 +9,14 @@ from explore_options.strategies.base import StrategyInput
 from explore_options.strategies.registry import get_strategy, list_strategies
 
 
+_BANNED_STRATEGY_NAMES = {
+    "cash-secured-put",
+    "cash-secured-puts",
+    "cash secured put",
+    "csp",
+}
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run or list available strategies.")
     parser.add_argument("--list", action="store_true", help="List available strategies")
@@ -69,6 +77,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.strategy:
         parser.error("--strategy is required unless --list is used")
+
+    if args.strategy.lower() in _BANNED_STRATEGY_NAMES:
+        parser.error(f"Strategy disabled by policy: {args.strategy}")
 
     strategy = get_strategy(args.strategy)
     if strategy is None:
