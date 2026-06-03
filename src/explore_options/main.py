@@ -5,6 +5,7 @@ from datetime import date
 
 from explore_options.connectivity.cboe_options import JsonOptionChainProvider
 from explore_options.connectivity.diagonal_snapshot import create_diagonal_snapshot_report
+from explore_options.strategies.base import StrategyInput
 from explore_options.strategies.registry import get_strategy, list_strategies
 
 
@@ -73,7 +74,12 @@ def main(argv: list[str] | None = None) -> int:
     if strategy is None:
         parser.error(f"Unknown strategy: {args.strategy}")
 
-    print(strategy.execute(args.input))
+    strategy_input = StrategyInput(
+        symbol=(args.input.strip() or "UNDERLYING"),
+        text_input=args.input,
+    )
+    output = strategy.execute(strategy_input)
+    print(output.render_text())
     return 0
 
 

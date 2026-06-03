@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from explore_options.strategies.base import StrategyInput
 from explore_options.strategies.covered_calls import CoveredCallsStrategy
 from explore_options.strategies.registry import get_strategy
 
@@ -7,7 +8,7 @@ from explore_options.strategies.registry import get_strategy
 def test_covered_calls_strategy_with_symbol() -> None:
     strategy = CoveredCallsStrategy()
 
-    output = strategy.execute("SNOW")
+    output = strategy.execute(StrategyInput(symbol="SNOW", text_input="SNOW")).render_text()
 
     assert "Strategy: Covered Calls (SNOW)" in output
     assert "Buy or hold 100 shares of stock." in output
@@ -17,7 +18,7 @@ def test_covered_calls_strategy_with_symbol() -> None:
 def test_covered_calls_strategy_default_symbol() -> None:
     strategy = CoveredCallsStrategy()
 
-    output = strategy.execute("")
+    output = strategy.execute(StrategyInput()).render_text()
 
     assert "Strategy: Covered Calls (UNDERLYING)" in output
 
