@@ -8,12 +8,14 @@ from explore_options.strategies.echo import EchoStrategy
 from explore_options.strategies.long_leaps_short_calls_diagonal import (
     LongLeapsShortCallsDiagonalStrategy,
 )
+from explore_options.strategies.rolling_options import RollingOptionsStrategy
 from explore_options.strategies.reverse import ReverseStrategy
 
 _STRATEGIES: Dict[str, Strategy] = {
     CoveredCallsStrategy.name: CoveredCallsStrategy(),
     EchoStrategy.name: EchoStrategy(),
     LongLeapsShortCallsDiagonalStrategy.name: LongLeapsShortCallsDiagonalStrategy(),
+    RollingOptionsStrategy.name: RollingOptionsStrategy(),
     ReverseStrategy.name: ReverseStrategy(),
 }
 

@@ -73,6 +73,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=30,
         help="Days to expiration for the trade setup",
     )
+    parser.add_argument(
+        "--annualized-return",
+        type=float,
+        default=0.0,
+        help="Annualized percent return for roll evaluation (e.g., 24.5)",
+    )
     return parser
 
 
@@ -83,6 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     checklist_input = ChecklistInput(
         capital_available=args.capital,
         dte_days=args.dte_days,
+        annualized_percent_return=args.annualized_return,
     )
 
     if args.checklist_all:

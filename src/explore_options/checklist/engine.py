@@ -15,6 +15,7 @@ _BANNED_EMOTIONAL_TURMOIL_STRATEGIES = {
 class ChecklistInput:
     capital_available: float = 25_000.0
     dte_days: int = 30
+    annualized_percent_return: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -70,19 +71,33 @@ def evaluate_strategy_checklist(
 ) -> ChecklistResult:
     hard_failures = _evaluate_common_hard_rules(strategy_name, checklist)
 
+    normalized_name = strategy_name.lower().strip()
+    is_rolling = normalized_name == "rolling-options"
+
     score = 0
     max_score = 2
     warnings: list[str] = []
 
-    if checklist.capital_available > 10_000:
-        score += 1
-    else:
-        warnings.append("Capital must be greater than 10,000.")
+    if is_rolling:
+        if checklist.dte_days >= 30:
+            score += 1
+        else:
+            warnings.append("Rolling options requires DTE of at least 30 days.")
 
-    if checklist.dte_days >= 30:
-        score += 1
+        if checklist.annualized_percent_return > 20:
+            score += 1
+        else:
+            warnings.append("Rolling options requires annualized percent return above 20%.")
     else:
-        warnings.append("DTE must be 30 days or greater.")
+        if checklist.capital_available > 10_000:
+            score += 1
+        else:
+            warnings.append("Capital must be greater than 10,000.")
+
+        if checklist.dte_days >= 30:
+            score += 1
+        else:
+            warnings.append("DTE must be 30 days or greater.")
 
     passed = not hard_failures and score == max_score
 

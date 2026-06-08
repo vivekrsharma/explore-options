@@ -3,6 +3,7 @@ from __future__ import annotations
 from explore_options.strategies.base import StrategyInput, StrategyOutput
 from explore_options.strategies.covered_calls import CoveredCallsStrategy
 from explore_options.strategies.echo import EchoStrategy
+from explore_options.strategies.rolling_options import RollingOptionsStrategy
 from explore_options.strategies.reverse import ReverseStrategy
 
 
@@ -34,5 +35,15 @@ def test_covered_calls_strategy_output_sections() -> None:
     rendered = strategy.execute(StrategyInput(symbol="SNOW")).render_text()
 
     assert "Strategy: Covered Calls (SNOW)" in rendered
+    assert "Structure:" in rendered
+    assert "Objective:" in rendered
+
+
+def test_rolling_options_strategy_output_sections() -> None:
+    strategy = RollingOptionsStrategy()
+
+    rendered = strategy.execute(StrategyInput(symbol="MSFT")).render_text()
+
+    assert "Strategy: Rolling Options (MSFT)" in rendered
     assert "Structure:" in rendered
     assert "Objective:" in rendered

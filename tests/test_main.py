@@ -12,6 +12,7 @@ def test_list_strategies(capsys):
     assert "covered-calls" in captured.out
     assert "echo" in captured.out
     assert "long-leaps-short-calls-diagonal" in captured.out
+    assert "rolling-options" in captured.out
     assert "reverse" in captured.out
 
 
@@ -50,6 +51,14 @@ def test_run_covered_calls_strategy(capsys):
 
     assert exit_code == 0
     assert "Strategy: Covered Calls (SNOW)" in captured.out
+
+
+def test_run_rolling_options_strategy(capsys):
+    exit_code = main(["--strategy", "rolling-options", "--input", "AAPL"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Strategy: Rolling Options (AAPL)" in captured.out
 
 
 def test_diagonal_snapshot_cli(monkeypatch: pytest.MonkeyPatch, capsys):
@@ -123,9 +132,20 @@ def test_checklist_cli_single_strategy(capsys):
 
 
 def test_checklist_cli_all_strategies(capsys):
-    exit_code = main(["--checklist-all", "--capital", "25000", "--dte-days", "45"])
+    exit_code = main(
+        [
+            "--checklist-all",
+            "--capital",
+            "25000",
+            "--dte-days",
+            "45",
+            "--annualized-return",
+            "25",
+        ]
+    )
     captured = capsys.readouterr()
 
     assert exit_code == 0
     assert "Checklist for covered-calls" in captured.out
     assert "Checklist for long-leaps-short-calls-diagonal" in captured.out
+    assert "Checklist for rolling-options" in captured.out

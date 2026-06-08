@@ -59,3 +59,31 @@ def test_checklist_result_render_includes_confidence() -> None:
     rendered = result.render_text()
 
     assert "Confidence:" in rendered
+
+
+def test_rolling_options_checklist_passes_with_minimum_thresholds() -> None:
+    result = evaluate_strategy_checklist(
+        "rolling-options",
+        ChecklistInput(
+            dte_days=30,
+            annualized_percent_return=20.1,
+        ),
+    )
+
+    assert result.passed is True
+    assert result.score == 2
+    assert result.confidence_label == "High"
+
+
+def test_rolling_options_checklist_fails_when_annualized_return_too_low() -> None:
+    result = evaluate_strategy_checklist(
+        "rolling-options",
+        ChecklistInput(
+            dte_days=35,
+            annualized_percent_return=20.0,
+        ),
+    )
+
+    assert result.passed is False
+    assert result.score == 1
+    assert any("annualized percent return" in item for item in result.warnings)
